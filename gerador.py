@@ -1,3 +1,4 @@
+from getpass import getpass
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour
 from spade.template import Template
@@ -6,8 +7,7 @@ import random
 import time
 
 class Gerador(Agent):
-    # randType = str(random.randint(1, 3)) + "grau"
-    randType = "3grau"
+    randType = str(random.randint(1, 3)) + "grau"
 
     x = random.randint(-1000,1000)
     a=0
@@ -18,10 +18,9 @@ class Gerador(Agent):
         b = -1 * (a*x)
     if randType == "2grau":  
         b = -1 * (a*x*x)
-    #? Tem um jeito mlehor de fazer isso
     else:
-        b = random.randint(-100,100)
-        c = random.randint(-100,100)
+        b = random.randint(-1000,1000)
+        c = random.randint(-1000,1000)
    
     class funcao_1grau(CyclicBehaviour):
         async def run(self):
@@ -50,14 +49,13 @@ class Gerador(Agent):
                 msg.body = str(int(x))
                 await self.send(msg)
 
-    # TODO Implementar o comportamento para a função de 3 grau
     class funcao_3grau(CyclicBehaviour):
         async def run(self):
             # Fica esperando uma msg
             res = await self.receive(timeout=5)
             if res:
                 x = float(res.body)
-                x = float( Gerador.a*x + Gerador.b )
+                x = float(-0.2*(Gerador.a + x)*(x - Gerador.b)*(x - Gerador.c) )
                 print("Enviou para " + str(res.sender) + " f(",res.body,")= ",x,"=>",int(x))
                 msg = Message(to=str(res.sender)) 
                 msg.set_metadata("performative", "inform")  
@@ -89,13 +87,11 @@ class Gerador(Agent):
             tf = self.funcao_1grau()
             print("Funcao de 1o grau: ", Gerador.x)
             print("Funcao: ", Gerador.a, "x + (", Gerador.b, ")")
-
         if Gerador.randType == "2grau":
             tf = self.funcao_2grau()
             print("Funcao de 2o grau: +-", Gerador.x)
             print("Funcao: ", Gerador.a, "x² + (", Gerador.b, ")")
-
-        else:
+        if Gerador.randType == "3grau":
             tf = self.funcao_3grau()
             print("Funcao de 3o grau: -(", Gerador.a, "),", Gerador.b, " e ", Gerador.c)
             print("Funcao: -0.2*(x + (", Gerador.a, "))(x - (", Gerador.b, "))(x - (", Gerador.c,"))")
@@ -110,16 +106,20 @@ class Gerador(Agent):
         template.set_metadata("performative", "request")
         self.add_behaviour(ft, template)
 
-gerador = Gerador("pedrosmas@jix.im", "sender-ufsc")
-gerador.web.start(hostname="127.0.0.1", port="10000")
-res = gerador.start()
+if __name__ == "__main__":
 
-res.result()
+    gerador_id = input("Conta do servidor JIX do gerador: ")
+    passwd = getpass("Senha do gerador:")
+    gerador = Gerador(gerador_id, passwd)
+    gerador.web.start(hostname="127.0.0.1", port="10000")
+    res = gerador.start()
 
-while gerador.is_alive():
-    try:
-        time.sleep(1)
-    except KeyboardInterrupt:
-        gerador.stop()
-        break
-print("Agente encerrou!")
+    res.result()
+
+    while gerador.is_alive():
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            gerador.stop()
+            break
+    print("Agente encerrou!")
