@@ -10,7 +10,7 @@
  	- Entre com a senha resolvedor
 6. Execute no terminal ```python3 gerador.py```
   - Entre com a conta JIX do geradoR
- 	- Entre com a senha do gerador 
+  - Entre com a senha do gerador 
 
 ## Pré-requisitos: 
 1. Bibliotecas Utilizadas
